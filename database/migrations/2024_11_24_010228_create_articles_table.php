@@ -20,6 +20,8 @@ return new class extends Migration
             $table->string('category');
             $table->date('published_at');
             $table->timestamps();
+            $table->index(['title', 'category', 'source', 'published_at']);
+            $table->index(['author']);
         });
     }
 

@@ -75,6 +75,9 @@ class Article extends Model
             $query->whereYear('published_at', $filters['year']);
         }
 
+        // Add ordering
+        $query->orderBy('published_at', 'desc');
+        
         // Paginate results
         return $query->paginate($perPage, ['*'], 'page', $currentPage);
     }
