@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ArticleController;
+use App\Http\Controllers\PreferenceController;
 
 Route::controller(AuthController::class)->group(function () {
     Route::post('/register', 'register');
@@ -17,5 +18,9 @@ Route::controller(AuthController::class)->group(function () {
 Route::middleware('auth:sanctum')->group( function () {
     Route::controller(ArticleController::class)->group(function () {
         Route::get('/articles', 'index');
+    });
+    Route::controller(PreferenceController::class)->group(function () {
+        Route::post('/preferences', 'setPreferences');
+        Route::get('/preferences', 'getPreferences');
     });
 });
