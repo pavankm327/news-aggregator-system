@@ -47,12 +47,17 @@ class Article extends Model
 
         // Filter by category
         if (!empty($filters['category'])) {
-            $query->where('category', $filters['category']);
+            $query->whereIn('category', (array) $filters['category']);
         }
 
         // Filter by source
         if (!empty($filters['source'])) {
-            $query->where('source', $filters['source']);
+            $query->whereIn('source', (array) $filters['source']);
+        }
+
+        // Filter by authour
+        if (!empty($filters['author'])) {
+            $query->whereIn('author', (array) $filters['author']);
         }
 
         // Filter by published date

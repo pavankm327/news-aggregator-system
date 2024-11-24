@@ -12,6 +12,34 @@ use App\Http\Controllers\BaseController as BaseController;
 class ArticleController extends BaseController
 {
     /**
+     * Handle fetching source, author and cotegories from articles table
+     *
+     * @return JsonResponse
+     */
+    public function fetchDataForFiltersFromArticle() : JsonResponse
+    {
+        // Fetch distinct values for sources, authors, and categories
+        $sources = Article::distinct()->pluck('source')->filter()->values();
+        $authors = Article::distinct()->pluck('author')->filter()->values();
+        $categories = Article::distinct()->pluck('category')->filter()->values();
+
+
+        // Prepare the response data
+        $filterData = [
+            'sources' => $sources,
+            'authors' => $authors,
+            'categories' => $categories,
+        ];
+
+        if (empty($filterData)) {
+            return $this->sendError('Data not found..!', null, 404);    
+        }
+
+        // Return the filter data in a successful response
+        return $this->sendResponse($filterData, 'data retrieved successfully.');
+    }
+
+    /**
      * Handle fetching articles with or without filters and query parameters.
      *
      * @param Request $request

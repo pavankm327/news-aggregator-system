@@ -17,10 +17,12 @@ Route::controller(AuthController::class)->group(function () {
 
 Route::middleware('auth:sanctum')->group( function () {
     Route::controller(ArticleController::class)->group(function () {
+        Route::get('/article/filters', 'fetchDataForFiltersFromArticle');
         Route::get('/articles', 'index');
     });
     Route::controller(PreferenceController::class)->group(function () {
         Route::post('/preferences', 'setPreferences');
         Route::get('/preferences', 'getPreferences');
+        Route::get('/preferences/feed', 'fetchPersonalizedFeed');
     });
 });
