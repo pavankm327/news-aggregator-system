@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
 
 class Article extends Model
 {
@@ -38,51 +39,54 @@ class Article extends Model
      */
     public static function filterArticles($filters, $perPage = 10, $currentPage = 1)
     {
-        $query = self::query();
-        
-        // Filter by keyword in title or description
-        if (!empty($filters['keyword'])) {
-            $query->where(function ($q) use ($filters) {
-                $q->where('title', 'like', '%' . $filters['keyword'] . '%')
-                ->orWhere('description', 'like', '%' . $filters['keyword'] . '%');
-            });
-        }
+        $cacheKey = 'filtered_articles_' . md5(json_encode($filters));
+        return Cache::remember($cacheKey, now()->addMinutes(30), function () use ($filters, $perPage, $currentPage) {
+            $query = self::query();
+            
+            // Filter by keyword in title or description
+            if (!empty($filters['keyword'])) {
+                $query->where(function ($q) use ($filters) {
+                    $q->where('title', 'like', '%' . $filters['keyword'] . '%')
+                    ->orWhere('description', 'like', '%' . $filters['keyword'] . '%');
+                });
+            }
 
-        // Filter by category
-        if (!empty($filters['category'])) {
-            $query->whereIn('category', (array) $filters['category']);
-        }
+            // Filter by category
+            if (!empty($filters['category'])) {
+                $query->whereIn('category', (array) $filters['category']);
+            }
 
-        // Filter by source
-        if (!empty($filters['source'])) {
-            $query->whereIn('source', (array) $filters['source']);
-        }
+            // Filter by source
+            if (!empty($filters['source'])) {
+                $query->whereIn('source', (array) $filters['source']);
+            }
 
-        // Filter by authour
-        if (!empty($filters['author'])) {
-            $query->whereIn('author', (array) $filters['author']);
-        }
+            // Filter by authour
+            if (!empty($filters['author'])) {
+                $query->whereIn('author', (array) $filters['author']);
+            }
 
-        // Filter by published date
-        if (!empty($filters['date'])) {
-            $query->whereDate('published_at', date('Y-m-d',strtotime($filters['date'])));
-        }
+            // Filter by published date
+            if (!empty($filters['date'])) {
+                $query->whereDate('published_at', date('Y-m-d',strtotime($filters['date'])));
+            }
 
-        // Filter by published month
-        if (!empty($filters['month'])) {
-            $query->whereMonth('published_at', $filters['month']);
-        }
+            // Filter by published month
+            if (!empty($filters['month'])) {
+                $query->whereMonth('published_at', $filters['month']);
+            }
 
-        // Filter by published year
-        if (!empty($filters['year'])) {
-            $query->whereYear('published_at', $filters['year']);
-        }
+            // Filter by published year
+            if (!empty($filters['year'])) {
+                $query->whereYear('published_at', $filters['year']);
+            }
 
-        // Add ordering
-        $query->orderBy('published_at', 'desc');
-        
-        // Paginate results
-        return $query->paginate($perPage, ['*'], 'page', $currentPage);
+            // Add ordering
+            $query->orderBy('published_at', 'desc');
+            
+            // Paginate results
+            return $query->paginate($perPage, ['*'], 'page', $currentPage);
+        });
     }
 
     /**

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
 
 class Preference extends Model
 {
@@ -75,14 +76,17 @@ class Preference extends Model
      */
     public static function getPreferencesByUser(int $userId) : ?Preference
     {
-        $preferences = self::where('user_id', $userId)->first();
-    
-        if ($preferences) {
-            // Decode JSON fields
-            $preferences = self::decodeJsonFields($preferences);
-        }
+        $cacheKey = 'preferenced_news_' . md5(json_encode($userId));
+        return Cache::remember($cacheKey, now()->addMinutes(30), function () use ($userId) {
+            $preferences = self::where('user_id', $userId)->first();
 
-        return $preferences;
+            if ($preferences) {
+                // Decode JSON fields
+                $preferences = self::decodeJsonFields($preferences);
+            }
+
+            return $preferences;
+        });
     }
     
     /**
