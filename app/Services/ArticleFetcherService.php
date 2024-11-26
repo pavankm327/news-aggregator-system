@@ -4,8 +4,8 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use App\Models\Article;
-
 use Carbon\Carbon;
+use Log;
 
 class ArticleFetcherService
 {
@@ -26,14 +26,19 @@ class ArticleFetcherService
 
     protected function fetchFromNewsAPI()
     {
-        $response = Http::get(env('NEWS_API_URL'), [
-            'apiKey' => env('NEWS_API_KEY'),
+        $url = config('services.news_api.url');
+        $key = config('services.news_api.key');
+        $response = Http::get($url, [
+            'apiKey' => $key,
             'country' => 'us',
         ]);
 
-        if ($response->successful()) {
-            $this->storeArticles($response->json('articles'), 'NewsAPI');
+        if ($response->failed()) {
+            Log::error("API request failed: " . $response->body());
+            return;
         }
+
+        $this->storeArticles($response->json('articles'), 'NewsAPI');
     }
 
     protected function storeArticles(array $articles, $source)
@@ -46,7 +51,7 @@ class ArticleFetcherService
                     'author' => $article['author'] ?? 'Unknown',
                     'source' => $source,
                     'category' => $article['category'] ?? 'general',
-                    'published_at' => Carbon::parse($article['publishedAt'])->format('Y-m-d H:i:s') ?? now(),
+                    'published_at' => isset($article['publishedAt']) ? Carbon::parse($article['publishedAt'])->format('Y-m-d H:i:s') : now(),
                 ]
             );
         }
@@ -54,18 +59,23 @@ class ArticleFetcherService
 
     protected function fetchFromGuardianAPI()
     {
-        $response = Http::get(env('GUARDIAN_API_URL'), [
-            'api-key' => env('GUARDIAN_API_KEY'),
-            // 'section' => 'world',
+        $url = config('services.guardian_api.url');
+        $key = config('services.guardian_api.key');
+        $response = Http::get($url, [
+            'api-key' => $key,
             'show-fields' => 'headline,byline,bodyText,',
         ]);
-        if ($response->successful()) {
-            $this->storeGuardianArticles($response->json('response.results'), 'The Guardian');
+
+        if ($response->failed()) {
+            Log::error("API request failed: " . $response->body());
+            return;
         }
-    }  
-    
-    function storeGuardianArticles(array $articles, $source)
-    {   
+
+        $this->storeGuardianArticles($response->json('response.results'), 'The Guardian');
+    }
+
+    protected function storeGuardianArticles(array $articles, $source)
+    {
         foreach ($articles as $article) {
             Article::updateOrCreate(
                 ['title' => $article['webTitle']],
@@ -74,21 +84,26 @@ class ArticleFetcherService
                     'author' => $article['fields']['byline'] ?? 'Unknown',
                     'source' => $source ?? 'Unknown',
                     'category' => $article['sectionName'] ?? 'Unknown',
-                    'published_at' => Carbon::parse($article['webPublicationDate'])->format('Y-m-d H:i:s') ?? now(),
+                    'published_at' => isset($article['webPublicationDate']) ? Carbon::parse($article['webPublicationDate'])->format('Y-m-d H:i:s') : now(),
                 ]
             );
         }
     }
 
-
     protected function fetchFromNYTAPI()
     {
-        $response = Http::get(env('NYT_API_URL'), [
-            'api-key' => env('NYT_API_KEY'),
+        $url = config('services.nyt_api.url');
+        $key = config('services.nyt_api.key');
+        $response = Http::get($url, [
+            'api-key' => $key,
         ]);
-        if ($response->successful()) {
-            $this->storeNytArticles($response->json('results'), 'New York Times');
+
+        if ($response->failed()) {
+            Log::error("API request failed: " . $response->body());
+            return;
         }
+
+        $this->storeNytArticles($response->json('results'), 'New York Times');
     }
 
     public function storeNytArticles(array $articles, $source)
@@ -101,7 +116,7 @@ class ArticleFetcherService
                     'author' => $article['byline'] ?? 'Unknown',
                     'source' => $source ?? 'Unknown',
                     'category' => $article['section'] ?? 'Unknown',
-                    'published_at' => Carbon::parse($article['published_date'])->format('Y-m-d H:i:s') ?? now(),
+                    'published_at' => isset($article['published_date']) ? Carbon::parse($article['published_date'])->format('Y-m-d H:i:s') : now(),
                 ]
             );
         }
