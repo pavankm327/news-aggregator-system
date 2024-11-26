@@ -9,6 +9,7 @@ class Preference extends Model
 {
     use SoftDeletes;
     
+    // Define the attributes that are mass assignable
     protected $fillable = ['user_id', 'preferred_sources', 'preferred_categories', 'preferred_authors'];
 
     protected $casts = [
@@ -17,7 +18,11 @@ class Preference extends Model
         'preferred_authors' => 'array',
     ];
 
+    // Specify the attributes to be treated as date instances
     protected $dates = ['deleted_at'];
+
+    // Hide deleted_at from model results
+    protected $hidden = ['created_at', 'updated_at', 'deleted_at'];
 
     /**
      * Define the relationship between Preference and User.
