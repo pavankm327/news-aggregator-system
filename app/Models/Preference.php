@@ -21,7 +21,7 @@ class Preference extends Model
     // Specify the attributes to be treated as date instances
     protected $dates = ['deleted_at'];
 
-    // Hide deleted_at from model results
+    // Hide attributes from model results
     protected $hidden = ['created_at', 'updated_at', 'deleted_at'];
 
     /**
